@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study XYZ - Enrollment Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Global Enrollment Dashboard for Study XYZ</h1>
+            <p class="subtitle">Target: 4,050 Patients | Target Completion: December 2027</p>
+        </header>
+
+        <!-- Data Table -->
+        <div class="table-container">
+            <h2>Detailed Enrollment Data</h2>
+            <table id="enrollmentTable">
+                <thead>
+                    <tr>
+                        <th>Region</th>
+                        <th>Country</th>
+                        <th>Sites Planned</th>
+                        <th>Sites Open</th>
+                        <th>Patients Planned</th>
+                        <th>Patients Enrolled</th>
+                        <th>FPFV</th>
+                        <th>Current Enrollment Rate (pts/site/month)</th>
+                        <th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody id="enrollmentTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="summary-grid">
+            <div class="stat-card">
+                <h3>Total Currently Enrolled</h3>
+                <p class="stat-value" id="totalEnrolled">-</p>
+                <p class="stat-label">of <span id="totalPlanned">-</span> planned</p>
+            </div>
+            <div class="stat-card">
+                <h3>Current Enrollment Progress</h3>
+                <p class="stat-value" id="percentComplete">-</p>
+                <p class="stat-label">% of planned patients</p>
+            </div>
+            <div class="stat-card">
+                <h3>Sites Currently Active</h3>
+                <p class="stat-value" id="sitesActive">-</p>
+                <p class="stat-label">of <span id="totalSites">-</span> planned</p>
+            </div>
+            <div class="stat-card">
+                <h3>Avg Current Enrollment Rate</h3>
+                <p class="stat-value" id="currentRate">-</p>
+                <p class="stat-label">pts/site/month</p>
+            </div>
+        </div>
+
+        <!-- Scenario Controls -->
+        <div class="controls-panel">
+            <h2>Scenario Modeling</h2>
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label for="targetDate">Target Completion Date:</label>
+                    <input type="date" id="targetDate" value="2027-12-31">
+                </div>
+                <div class="control-group">
+                    <label for="targetPatients">Target Patients:</label>
+                    <input type="number" id="targetPatients" value="4050" min="0">
+                </div>
+                <div class="control-group">
+                    <label for="additionalSites">Additional Sites to Activate:</label>
+                    <input type="number" id="additionalSites" value="0" min="0" max="100">
+                </div>
+                <div class="control-group">
+                    <label for="targetEnrollmentRate">Target Rate (pts/site/month):</label>
+                    <input type="number" id="targetEnrollmentRate" value="1.0" step="0.1" min="0">
+                </div>
+                <div class="control-group">
+                    <label for="rampUpMonths">Ramp-up Period (months):</label>
+                    <input type="number" id="rampUpMonths" value="6" min="0" max="24" title="Months for sites to reach target rate">
+                </div>
+                <div class="control-group">
+                    <label for="holidayImpact">
+                        <input type="checkbox" id="holidayImpact" checked>
+                        Account for Holidays
+                    </label>
+                    <small style="color: #718096; font-size: 0.85em;">~20% reduction Dec/Jan</small>
+                </div>
+                <div class="control-group">
+                    <label for="regionFilter">Filter by Region:</label>
+                    <select id="regionFilter">
+                        <option value="all">All Regions</option>
+                        <option value="LATAM">LATAM</option>
+                        <option value="APAC">APAC</option>
+                        <option value="EMEA">EMEA</option>
+                        <option value="North America">North America</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="countryFilter">Filter by Country:</label>
+                    <select id="countryFilter">
+                        <option value="all">All Countries</option>
+                    </select>
+                </div>
+                <div class="control-group" style="grid-column: 1 / -1;">
+                    <button id="updateProjections" class="btn-primary">Update Projections</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Insights -->
+        <div class="insights-panel">
+            <h2>Key Insights</h2>
+            <div class="insights-grid">
+                <div class="insight-card">
+                    <h4>Required monthly enrollment</h4>
+                    <p class="insight-value" id="requiredPtsPerMonth">-</p>
+                    <p class="insight-desc">patients/month needed to meet target</p>
+                </div>
+                <div class="insight-card">
+                    <h4>Required rate per site to meet patient target</h4>
+                    <p class="insight-value" id="requiredPtsPerSitePerMonth">-</p>
+                    <p class="insight-desc">pts/site/month needed</p>
+                </div>
+                <div class="insight-card">
+                    <h4>Sites needed at target rate</h4>
+                    <p class="insight-value" id="sitesNeeded">-</p>
+                    <p class="insight-desc">active sites at target rate</p>
+                </div>
+                <div class="insight-card">
+                    <h4>Estimated Completion Date at current rate</h4>
+                    <p class="insight-value" id="lplvDate">-</p>
+                    <p class="insight-desc" id="lplvStatus">with ramp-up & holidays</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-container">
+            <div class="chart-card chart-card-full">
+                <h2>Enrollment Projection</h2>
+                <canvas id="projectionChart"></canvas>
+            </div>
+
+            <div class="chart-card chart-card-full">
+                <h2>Enrollment by Region</h2>
+                <div class="dual-chart-container">
+                    <div class="dual-chart">
+                        <h3>Planned Enrollment</h3>
+                        <canvas id="plannedRegionChart"></canvas>
+                    </div>
+                    <div class="dual-chart">
+                        <h3>Current Enrollment</h3>
+                        <canvas id="enrolledRegionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
